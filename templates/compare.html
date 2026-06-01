@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Repositories — OOP Purity Analyzer{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-container">
+        <h1 class="hero-title">Repository Comparison</h1>
+        <p class="hero-subtitle">Side-by-side structural OOP comparison of selected repositories</p>
+    </div>
+</section>
+
+<section class="categories-section" style="padding-bottom: 2rem;">
+    <div style="max-width: 1280px; margin: 0 auto; width: 100%;">
+        <div style="margin-bottom: 2rem;">
+            <a href="javascript:history.back()" class="btn btn-outline">⬅ Back to Results</a>
+        </div>
+
+        <!-- Repo cards grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+            {% for repo in repos %}
+            <div class="category-card" style="border-left: 4px solid {{ repo.tier_color or 'var(--accent)' }};">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; word-break: break-all;">
+                    <a href="{{ repo.url }}" target="_blank" rel="noopener" style="color: var(--text-primary);">
+                        {{ repo.full_name }}
+                    </a>
+                </h3>
+                <div style="margin-bottom: 1rem;">
+                    <span class="tier-badge" style="background-color: {{ repo.tier_color }}20; color: {{ repo.tier_color }}; border: 1px solid {{ repo.tier_color }}40; font-size: 0.8rem; padding: 0.3rem 0.8rem; border-radius: 50px;">
+                        {{ repo.purity_tier }}
+                    </span>
+                </div>
+                
+                <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
+                    <strong>OOP Purity Score:</strong> <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">{{ repo.total_score }}/100</span><br>
+                    <strong>Dominant Language:</strong> {{ repo.matched_language or repo.primary_language }}<br>
+                    <strong>Popularity:</strong> ⭐ {{ "{:,}".format(repo.stars) }} stars | 🍴 {{ "{:,}".format(repo.forks) }} forks<br>
+                    <strong>Size:</strong> {{ "{:,}".format(repo.size_kb) }} KB
+                </div>
+
+                {% if repo.languages_scored %}
+                <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+                    <h5 style="color: var(--accent-light); margin-bottom: 0.5rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">AST Code Insights</h5>
+                    {% for lang in repo.languages_scored %}
+                    <div style="background: rgba(0, 0, 0, 0.15); padding: 0.6rem; border-radius: var(--radius-sm); margin-bottom: 0.5rem; font-size: 0.8rem;">
+                        <div style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.2rem;">
+                            <span>{{ lang.language }}</span>
+                            <span style="color: {% if lang.modifier >= 1.0 %}var(--success){% else %}var(--danger){% endif %};">{{ lang.modifier }}x</span>
+                        </div>
+                        <div style="color: var(--text-secondary); font-style: italic; line-height: 1.3;">
+                            {{ lang.modifier_reason }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Charts grid -->
+        <div class="chart-grid-2col" style="margin-bottom: 3rem;">
+            <div class="chart-card">
+                <div id="chart-radar-compare" class="chart-render"></div>
+            </div>
+            <div class="chart-card">
+                <div id="chart-bar-compare" class="chart-render"></div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var radarChart = {{ compare_radar | safe }};
+    var barChart = {{ compare_bar | safe }};
+    
+    renderChart('chart-radar-compare', radarChart);
+    renderChart('chart-bar-compare', barChart);
+});
+</script>
+{% endblock %}

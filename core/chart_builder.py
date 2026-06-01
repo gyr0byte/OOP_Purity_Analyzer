@@ -700,3 +700,135 @@ def stacked_bar_category_contribution(scored_repos: list[dict[str, Any]]) -> str
         margin=dict(l=200, r=40, t=60, b=60),
     )
     return pio.to_json(fig)
+
+
+def compare_repositories_radar(repos: list[dict[str, Any]]) -> str:
+    """Generate a multi-trace radar chart comparing 2-4 repositories side-by-side.
+
+    Args:
+        repos: List of scored repository dictionaries to compare.
+
+    Returns:
+        JSON string of the Plotly figure.
+    """
+    if not repos:
+        return _empty_figure("No repositories selected for comparison")
+
+    fig = go.Figure()
+    
+    categories = list(CATEGORY_LABELS.keys())
+    # Human-readable labels
+    labels = [CATEGORY_LABELS[c] for c in categories]
+    # Close the radar loop by repeating the first element
+    labels.append(labels[0])
+
+    colors = ["#4a90e2", "#e74c3c", "#2ecc71", "#f39c12"]
+    rgba_fills = [
+        "rgba(74, 144, 226, 0.1)",
+        "rgba(231, 76, 60, 0.1)",
+        "rgba(46, 204, 113, 0.1)",
+        "rgba(243, 156, 18, 0.1)"
+    ]
+
+    for i, repo in enumerate(repos[:4]):
+        percentages = []
+        for cat in categories:
+            val = repo["category_scores"].get(cat, 0)
+            cat_max = CATEGORY_MAX.get(cat, 1)
+            percentages.append(round((val / cat_max) * 100, 2))
+            
+        # Close the loop
+        percentages.append(percentages[0])
+        
+        fig.add_trace(
+            go.Scatterpolar(
+                r=percentages,
+                theta=labels,
+                fill="toself",
+                name=repo["full_name"],
+                line=dict(color=colors[i % len(colors)], width=2),
+                fillcolor=rgba_fills[i % len(rgba_fills)],
+                hovertemplate=(
+
+                    f"<b>{repo['full_name']}</b><br>"
+                    "%{theta}: %{r:.1f}%<extra></extra>"
+                ),
+            )
+        )
+
+    fig.update_layout(
+        title="Multi-Repository OOP Purity Radar Comparison",
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                gridcolor="rgba(255, 255, 255, 0.1)",
+                linecolor="rgba(255, 255, 255, 0.1)",
+            ),
+            angularaxis=dict(
+                gridcolor="rgba(255, 255, 255, 0.1)",
+                linecolor="rgba(255, 255, 255, 0.1)",
+            ),
+            bgcolor="rgba(0, 0, 0, 0)"
+        ),
+        template=_TEMPLATE,
+        font=_FONT,
+        height=500,
+        margin=_MARGIN,
+        showlegend=True,
+    )
+    return pio.to_json(fig)
+
+
+def compare_repositories_bar(repos: list[dict[str, Any]]) -> str:
+    """Generate a grouped bar chart comparing categories across repositories.
+
+    Args:
+        repos: List of scored repository dictionaries to compare.
+
+    Returns:
+        JSON string of the Plotly figure.
+    """
+    if not repos:
+        return _empty_figure("No repositories selected for comparison")
+
+    fig = go.Figure()
+    
+    categories = list(CATEGORY_LABELS.keys())
+    labels = [CATEGORY_LABELS[c] for c in categories]
+    colors = ["#4a90e2", "#e74c3c", "#2ecc71", "#f39c12"]
+
+    for i, repo in enumerate(repos[:4]):
+        percentages = []
+        for cat in categories:
+            val = repo["category_scores"].get(cat, 0)
+            cat_max = CATEGORY_MAX.get(cat, 1)
+            percentages.append(round((val / cat_max) * 100, 2))
+            
+        fig.add_trace(
+            go.Bar(
+                name=repo["full_name"],
+                x=labels,
+                y=percentages,
+                marker_color=colors[i % len(colors)],
+                hovertemplate=(
+                    f"<b>{repo['full_name']}</b><br>"
+                    "%{x}: %{y:.1f}%<extra></extra>"
+                )
+            )
+        )
+
+    fig.update_layout(
+        title="Category Purity Comparison (Grouped)",
+        xaxis_title="OOP Purity Criteria",
+        yaxis_title="Normalized Score (%)",
+        yaxis=dict(range=[0, 105]),
+        barmode="group",
+        template=_TEMPLATE,
+        font=_FONT,
+        height=500,
+        margin=_MARGIN,
+        showlegend=True,
+    )
+    return pio.to_json(fig)
+

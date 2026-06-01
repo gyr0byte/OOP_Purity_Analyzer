@@ -86,6 +86,7 @@ class RepoResult(db.Model):
     def to_dict(self) -> dict[str, Any]:
         """Reconstruct the full scored repo dictionary for template rendering."""
         return {
+            "id": self.id,
             "name": self.name,
             "full_name": self.full_name,
             "url": self.url,
@@ -185,6 +186,8 @@ def save_analysis(
     for repo in scored_repos:
         repo_result = RepoResult.from_scored_repo(analysis.id, repo)
         db.session.add(repo_result)
+        db.session.flush()
+        repo["id"] = repo_result.id
 
     db.session.commit()
     return analysis.id

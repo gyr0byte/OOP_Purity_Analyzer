@@ -65,6 +65,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 Session(app)
 init_db(app)
 
+from api.routes import api_bp
+app.register_blueprint(api_bp)
+
+
 # Validate GitHub token on startup
 try:
     scraper._get_github_client()
@@ -209,7 +213,9 @@ def results() -> Any:
         radar_charts=radar_charts,
         most_common_tier=most_common_tier,
         category_labels=CATEGORY_LABELS,
+        analysis_id=session.get("analysis_id"),
     )
+
 
 
 @app.route("/rubric", methods=["GET"])
@@ -279,6 +285,36 @@ def export_csv() -> Any:
         as_attachment=True,
         download_name=filename,
     )
+
+
+@app.route("/export/pdf", methods=["GET"])
+def export_active_pdf() -> Any:
+    """Generate and download a PDF report for the active session's analysis."""
+    analysis_id = session.get("analysis_id")
+    if not analysis_id:
+        return redirect(url_for("index"))
+    return redirect(url_for("export_analysis_pdf", analysis_id=analysis_id))
+
+
+@app.route("/history/<int:analysis_id>/export/pdf", methods=["GET"])
+def export_analysis_pdf(analysis_id: int) -> Any:
+    """Generate and download a PDF report for a specific saved analysis by ID."""
+    analysis = Analysis.query.get_or_404(analysis_id)
+    analysis_dict = analysis.to_dict()
+    repos = [r.to_dict() for r in analysis.repo_results]
+
+    from core.report_generator import generate_pdf_report
+    pdf_bytes = generate_pdf_report(analysis_dict, repos)
+
+    from io import BytesIO
+    filename = f"oop_purity_report_analysis_{analysis_id}.pdf"
+    return send_file(
+        BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=filename,
+    )
+
 
 
 @app.route("/history", methods=["GET"])
@@ -355,6 +391,51 @@ def history_detail(analysis_id: int) -> Any:
         category_labels=CATEGORY_LABELS,
         analysis_id=analysis_id,
     )
+
+
+@app.route("/compare", methods=["GET"])
+def compare() -> Any:
+    """Compare selected repositories side-by-side."""
+    ids_str = request.args.get("ids", "")
+    if not ids_str:
+        return redirect(url_for("history"))
+
+    try:
+        repo_ids = [int(i.strip()) for i in ids_str.split(",") if i.strip()]
+    except ValueError:
+        return render_template(
+            "error.html",
+            error_message="Invalid repository IDs specified for comparison.",
+        )
+
+    if len(repo_ids) < 2 or len(repo_ids) > 4:
+        return render_template(
+            "error.html",
+            error_message="Please select between 2 and 4 repositories to compare.",
+        )
+
+    repos = []
+    for rid in repo_ids:
+        repo_obj = RepoResult.query.get(rid)
+        if repo_obj:
+            repos.append(repo_obj.to_dict())
+
+    if len(repos) < 2:
+        return render_template(
+            "error.html",
+            error_message="Some of the selected repositories could not be loaded from the database.",
+        )
+
+    compare_radar = chart_builder.compare_repositories_radar(repos)
+    compare_bar = chart_builder.compare_repositories_bar(repos)
+
+    return render_template(
+        "compare.html",
+        repos=repos,
+        compare_radar=compare_radar,
+        compare_bar=compare_bar,
+    )
+
 
 
 @app.route("/health", methods=["GET"])

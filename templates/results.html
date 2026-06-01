@@ -118,17 +118,27 @@
     <div class="table-container">
         <div class="table-header-bar">
             <h2 class="section-title">Repository Details</h2>
+            <span style="font-size: 0.85rem; color: var(--text-muted); margin-left: 1rem; flex-grow: 1;">💡 Click any repository row to view detailed OOP structural analysis & AST metrics.</span>
             <div class="table-actions">
                 <input type="text" id="table-filter" class="form-input form-input-small" placeholder="Filter repos...">
+                <button id="compare-btn" class="btn btn-primary" style="display: none; align-items: center; gap: 0.4rem;" onclick="compareSelected()">📊 Compare Selected (<span id="compare-count">0</span>)</button>
                 <a href="{{ url_for('export_csv') }}" class="btn btn-secondary" id="export-csv-btn">📥 Export CSV</a>
+                {% if analysis_id %}
+                    <a href="{{ url_for('export_analysis_pdf', analysis_id=analysis_id) }}" class="btn btn-secondary" id="export-pdf-btn">📄 Export PDF</a>
+                {% else %}
+                    <a href="{{ url_for('export_active_pdf') }}" class="btn btn-secondary" id="export-pdf-btn">📄 Export PDF</a>
+                {% endif %}
                 <a href="{{ url_for('index') }}" class="btn btn-outline" id="analyze-again-btn">🔄 Analyze Again</a>
             </div>
+
+
         </div>
 
         <div class="table-wrapper">
             <table class="results-table" id="results-table">
                 <thead>
                     <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="select-all-compare" onclick="event.stopPropagation();"></th>
                         <th data-sort="name" class="sortable" id="th-name">Name ↕</th>
                         <th data-sort="language" class="sortable" id="th-language">Language ↕</th>
                         <th data-sort="score" class="sortable" id="th-score">Score ↕</th>
@@ -145,12 +155,21 @@
                         data-score="{{ repo.get('total_score', 0) }}"
                         data-stars="{{ repo.stars }}"
                         data-forks="{{ repo.forks }}"
-                        data-created="{{ repo.created_at }}">
+                        data-created="{{ repo.created_at }}"
+                        style="cursor: pointer;"
+                        onclick="showRepoDetails({{ loop.index0 }})">
+
+                        <td onclick="event.stopPropagation();" style="text-align: center;">
+                            {% if repo.scored %}
+                                <input type="checkbox" class="repo-compare-checkbox" data-id="{{ repo.id }}" onclick="toggleCheckboxSelection()">
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="{{ repo.url }}" target="_blank" rel="noopener" class="repo-link">
                                 {{ repo.full_name }}
                             </a>
                         </td>
+
                         <td>
                             {% if repo.languages_scored %}
                                 {% for l in repo.languages_scored %}
@@ -186,6 +205,19 @@
         </div>
     </div>
 </section>
+
+<!-- Repo Details Modal -->
+<div id="metrics-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-repo-name">Repository Details</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-repo-body">
+            <!-- Dynamic Content -->
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
@@ -280,6 +312,128 @@ document.addEventListener('DOMContentLoaded', function() {
             rows.forEach(function(row) { tbody.appendChild(row); });
         });
     });
+
+    // Checkbox comparison controls
+    var selectAll = document.getElementById('select-all-compare');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            var checked = this.checked;
+            var checkboxes = document.querySelectorAll('.repo-compare-checkbox');
+            checkboxes.forEach(function(cb) {
+                var row = cb.closest('.repo-row');
+                if (row && row.style.display !== 'none') {
+                    cb.checked = checked;
+                }
+            });
+            toggleCheckboxSelection();
+        });
+    }
+
+    window.toggleCheckboxSelection = function() {
+        var checked = document.querySelectorAll('.repo-compare-checkbox:checked');
+        var compareBtn = document.getElementById('compare-btn');
+        var compareCount = document.getElementById('compare-count');
+        
+        if (compareBtn && compareCount) {
+            compareCount.innerText = checked.length;
+            if (checked.length >= 2) {
+                compareBtn.style.display = 'inline-flex';
+            } else {
+                compareBtn.style.display = 'none';
+            }
+        }
+    };
+
+    window.compareSelected = function() {
+        var checked = document.querySelectorAll('.repo-compare-checkbox:checked');
+        if (checked.length < 2 || checked.length > 4) {
+            alert('Please select between 2 and 4 repositories to compare.');
+            return;
+        }
+        var ids = Array.from(checked).map(function(cb) {
+            return cb.getAttribute('data-id');
+        }).join(',');
+        window.location.href = '/compare?ids=' + ids;
+    };
+
+    // Modal control
+    var modal = document.getElementById('metrics-modal');
+
+    window.closeModal = function() {
+        modal.classList.remove('active');
+    };
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    };
+
+    var scoredRepos = {{ scored_repos | tojson | safe }};
+
+    window.showRepoDetails = function(index) {
+        var repo = scoredRepos[index];
+        if (!repo) return;
+
+        document.getElementById('modal-repo-name').innerText = repo.full_name;
+        var body = document.getElementById('modal-repo-body');
+        
+        if (!repo.scored) {
+            body.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">⚠️ Repository Not Scored</p>
+                <p>${repo.reason || 'Unsupported languages.'}</p>
+            </div>`;
+            modal.classList.add('active');
+            return;
+        }
+
+        var html = `<div class="modal-grid">`;
+        
+        repo.languages_scored.forEach(function(lang) {
+            var modifier = lang.modifier || 1.0;
+            var isNegative = modifier < 1.0;
+            var baseScore = lang.base_score || lang.total_score;
+            
+            html += `<div class="modal-metric-card">
+                <div class="modal-metric-header">
+                    <span class="modal-metric-title">${lang.language}</span>
+                    <span class="modal-modifier-badge ${isNegative ? 'negative' : ''}">
+                        Modifier: ${modifier}x
+                    </span>
+                </div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5;">
+                    <strong>Base Score:</strong> ${baseScore}/100 <br>
+                    <strong>Adjusted Score:</strong> ${lang.total_score}/100 <br>
+                    <strong>Justification:</strong> <span style="font-style: italic; color: var(--text-primary);">${lang.modifier_reason || 'Standard OOP patterns matched'}</span>
+                </div>`;
+                
+            if (lang.metrics) {
+                var m = lang.metrics;
+                html += `<h5 style="margin-top: 0.8rem; margin-bottom: 0.4rem; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase;">AST Structural Metrics</h5>
+                <table class="modal-table">
+                    <tr><td>Class Count</td><td>${m.class_count || 0}</td></tr>
+                    <tr><td>Interface Count</td><td>${m.interface_count || 0}</td></tr>
+                    <tr><td>Abstract Class Count</td><td>${m.abstract_count || 0}</td></tr>
+                    <tr><td>Encapsulation (Private)</td><td>${m.private_members || 0}</td></tr>
+                    <tr><td>Encapsulation (Protected)</td><td>${m.protected_members || 0}</td></tr>
+                    <tr><td>Encapsulation (Public)</td><td>${m.public_members || 0}</td></tr>
+                    <tr><td>Inheritances</td><td>${m.inheritance_count || 0}</td></tr>
+                    <tr><td>Polymorphism Markers</td><td>${m.polymorphism_count || 0}</td></tr>
+                    <tr><td>Total Lines of Code</td><td>${m.total_lines || 0}</td></tr>
+                    <tr><td>Module-level Functions</td><td>${m.total_functions || 0}</td></tr>
+                </table>`;
+            } else {
+                html += `<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">No detailed structural metrics available.</div>`;
+            }
+            
+            html += `</div>`;
+        });
+        
+        html += `</div>`;
+        body.innerHTML = html;
+        modal.classList.add('active');
+    };
 });
 </script>
 {% endblock %}
+

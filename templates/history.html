@@ -12,7 +12,7 @@
         {% if analyses %}
         <div class="history-grid" id="history-grid">
             {% for analysis in analyses %}
-            <a href="{{ url_for('history_detail', analysis_id=analysis.id) }}" class="history-card" id="history-card-{{ analysis.id }}">
+            <div onclick="window.location.href='{{ url_for('history_detail', analysis_id=analysis.id) }}'" class="history-card" id="history-card-{{ analysis.id }}" style="cursor: pointer;">
                 <div class="history-card-header">
                     <span class="history-id">#{{ analysis.id }}</span>
                     <span class="history-mode-badge">{{ analysis.mode | upper }}</span>
@@ -36,9 +36,13 @@
                 </div>
                 <div class="history-card-footer">
                     <span class="history-date">{{ analysis.created_at.strftime('%b %d, %Y — %H:%M') if analysis.created_at else 'N/A' }}</span>
-                    <span class="history-view-link">View Results →</span>
+                    <div style="display: flex; gap: 0.6rem; align-items: center;">
+                        <a href="{{ url_for('export_analysis_pdf', analysis_id=analysis.id) }}" class="btn btn-secondary btn-small" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; text-decoration: none; border-radius: 4px; display: inline-block;" onclick="event.stopPropagation();">📄 PDF</a>
+                        <span class="history-view-link">View →</span>
+                    </div>
                 </div>
-            </a>
+            </div>
+
             {% endfor %}
         </div>
 
