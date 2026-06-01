@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}OOP Purity Analyzer — Analysis History{% endblock %}
+
+{% block content %}
+<section class="history-section" id="history-section">
+    <div class="history-container">
+        <div class="history-header">
+            <h1 class="page-title">Analysis History</h1>
+            <p class="page-subtitle">Browse all past analysis runs. Click any entry to view its full results dashboard.</p>
+        </div>
+
+        {% if analyses %}
+        <div class="history-grid" id="history-grid">
+            {% for analysis in analyses %}
+            <a href="{{ url_for('history_detail', analysis_id=analysis.id) }}" class="history-card" id="history-card-{{ analysis.id }}">
+                <div class="history-card-header">
+                    <span class="history-id">#{{ analysis.id }}</span>
+                    <span class="history-mode-badge">{{ analysis.mode | upper }}</span>
+                </div>
+                <div class="history-card-body">
+                    <div class="history-stat-row">
+                        <span class="history-stat">
+                            <span class="history-stat-value">{{ analysis.total_repos }}</span>
+                            <span class="history-stat-label">Repos</span>
+                        </span>
+                        <span class="history-stat">
+                            <span class="history-stat-value">{{ analysis.scored_repos_count }}</span>
+                            <span class="history-stat-label">Scored</span>
+                        </span>
+                        <span class="history-stat">
+                            <span class="history-stat-value">{{ analysis.unscored_repos_count }}</span>
+                            <span class="history-stat-label">Unsupported</span>
+                        </span>
+                    </div>
+                    <p class="history-input-preview">{{ analysis.input_data[:80] }}{% if analysis.input_data | length > 80 %}…{% endif %}</p>
+                </div>
+                <div class="history-card-footer">
+                    <span class="history-date">{{ analysis.created_at.strftime('%b %d, %Y — %H:%M') if analysis.created_at else 'N/A' }}</span>
+                    <span class="history-view-link">View Results →</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="pagination-bar" id="pagination-bar">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('history', page=pagination.prev_num) }}" class="btn btn-secondary pagination-btn">← Previous</a>
+            {% endif %}
+            <span class="pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+            <a href="{{ url_for('history', page=pagination.next_num) }}" class="btn btn-secondary pagination-btn">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="history-empty" id="history-empty">
+            <div class="history-empty-icon">📭</div>
+            <h2 class="history-empty-title">No Analyses Yet</h2>
+            <p class="history-empty-text">Run your first analysis to see it appear here.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Analyze Repositories</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

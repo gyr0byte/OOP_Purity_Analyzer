@@ -1,7 +1,7 @@
 """Flask application entry point for the OOP Purity Analyzer.
 
 Provides routes for the landing page, analysis processing, results dashboard,
-scoring rubric reference, CSV export, and health checks.
+scoring rubric reference, CSV export, analysis history, and health checks.
 """
 
 import json
@@ -28,6 +28,7 @@ from werkzeug.exceptions import HTTPException
 
 import config
 from core import scraper, scorer, chart_builder
+from core.database import db, init_db, save_analysis, Analysis, RepoResult
 from core.scores_db import (
     CATEGORY_LABELS,
     CATEGORY_MAX,
@@ -57,7 +58,12 @@ app.config["SESSION_FILE_DIR"] = config.SESSION_FILE_DIR
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_USE_SIGNER"] = True
 
+# SQLite database configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///oop_analyzer.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 Session(app)
+init_db(app)
 
 # Validate GitHub token on startup
 try:
@@ -125,9 +131,14 @@ def analyze() -> Any:
         # Score
         scored_repos, summary = scorer.score_all(repos)
 
+        # Persist to database
+        analysis_id = save_analysis(mode, input_data, scored_repos, summary)
+        logger.info("Analysis persisted with ID: %d", analysis_id)
+
         # Store in session as JSON-serializable data
         session["scored_repos"] = scored_repos
         session["summary"] = summary
+        session["analysis_id"] = analysis_id
 
         logger.info(
             "Analysis complete — %d repos scored, %d unscored",
@@ -267,6 +278,82 @@ def export_csv() -> Any:
         mimetype="text/csv",
         as_attachment=True,
         download_name=filename,
+    )
+
+
+@app.route("/history", methods=["GET"])
+def history() -> str:
+    """Render the analysis history page with all past runs.
+
+    Returns:
+        Rendered history.html template.
+    """
+    page = request.args.get("page", 1, type=int)
+    per_page = 12
+    pagination = Analysis.query.order_by(Analysis.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    analyses = pagination.items
+    return render_template(
+        "history.html",
+        analyses=analyses,
+        pagination=pagination,
+    )
+
+
+@app.route("/history/<int:analysis_id>", methods=["GET"])
+def history_detail(analysis_id: int) -> Any:
+    """Load a past analysis from the database and render its results dashboard.
+
+    Args:
+        analysis_id: The ID of the analysis to view.
+
+    Returns:
+        Rendered results.html template, or 404 error.
+    """
+    analysis = Analysis.query.get_or_404(analysis_id)
+    scored_repos = [r.to_dict() for r in analysis.repo_results]
+    import json
+    summary = json.loads(analysis.summary_json) if analysis.summary_json else {}
+
+    scored_only = [r for r in scored_repos if r.get("scored")]
+
+    # Get unique languages for radar charts
+    unique_languages = list(dict.fromkeys(
+        r["matched_language"] for r in scored_only
+    ))
+
+    # Build all charts
+    charts: dict[str, Any] = {
+        "bar_total": chart_builder.bar_chart_total_scores(scored_repos),
+        "heatmap": chart_builder.heatmap_subcriteria(scored_repos),
+        "grouped_bar": chart_builder.grouped_bar_category_comparison(scored_repos),
+        "treemap": chart_builder.treemap_repos_by_tier(scored_repos),
+        "scatter": chart_builder.scatter_score_vs_stars(scored_repos),
+        "donut": chart_builder.donut_tier_distribution(scored_repos),
+        "timeline": chart_builder.line_chart_score_over_time(scored_repos),
+        "stacked_bar": chart_builder.stacked_bar_category_contribution(scored_repos),
+    }
+
+    # Radar charts per language
+    radar_charts: dict[str, str] = {}
+    for lang in unique_languages:
+        radar_charts[lang] = chart_builder.radar_chart_by_language(lang)
+
+    # Find most common tier
+    tier_dist = summary.get("tier_distribution", {})
+    most_common_tier = max(
+        tier_dist, key=tier_dist.get) if tier_dist else "N/A"
+
+    return render_template(
+        "results.html",
+        scored_repos=scored_repos,
+        summary=summary,
+        charts=charts,
+        radar_charts=radar_charts,
+        most_common_tier=most_common_tier,
+        category_labels=CATEGORY_LABELS,
+        analysis_id=analysis_id,
     )
 
 

@@ -858,6 +858,178 @@ img { max-width: 100%; display: block; }
     margin-top: 0.3rem;
 }
 
+/* --- History Section --- */
+.history-section {
+    padding: 4rem 2rem;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.history-header {
+    margin-bottom: 3rem;
+}
+
+.history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.history-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all var(--transition);
+    box-shadow: var(--shadow);
+    color: var(--text-primary);
+}
+
+.history-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-accent);
+    box-shadow: var(--shadow-lg), 0 0 15px var(--accent-glow);
+}
+
+.history-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+}
+
+.history-id {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.history-mode-badge {
+    background: rgba(74, 144, 226, 0.15);
+    color: var(--accent-light);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 50px;
+    border: 1px solid rgba(74, 144, 226, 0.3);
+}
+
+.history-stat-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.2rem;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.history-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.history-stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.history-stat-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.1rem;
+}
+
+.history-input-preview {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    word-break: break-all;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 0.6rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.2rem;
+}
+
+.history-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.history-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.history-view-link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    transition: color var(--transition);
+}
+
+.history-card:hover .history-view-link {
+    color: var(--accent-light);
+}
+
+.pagination-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.pagination-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.pagination-btn {
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
+}
+
+.history-empty {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-lg);
+    max-width: 480px;
+    margin: 2rem auto;
+}
+
+.history-empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.history-empty-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+
+.history-empty-text {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
     .navbar { padding: 0 1rem; }
@@ -865,7 +1037,7 @@ img { max-width: 100%; display: block; }
     .nav-links.active { display: flex; }
     .nav-toggle { display: flex; }
     .hero { padding: 3rem 1.5rem 2.5rem; }
-    .form-section, .categories-section, .charts-section, .table-section, .rubric-section { padding-left: 1rem; padding-right: 1rem; }
+    .form-section, .categories-section, .charts-section, .table-section, .rubric-section, .history-section { padding-left: 1rem; padding-right: 1rem; }
     .tab-nav { flex-direction: column; }
     .chart-grid-2col { grid-template-columns: 1fr; }
     .radar-grid { grid-template-columns: 1fr; }
@@ -874,6 +1046,7 @@ img { max-width: 100%; display: block; }
     .table-header-bar { flex-direction: column; align-items: flex-start; }
     .table-actions { width: 100%; flex-wrap: wrap; }
     .tier-grid { flex-direction: column; align-items: stretch; }
+    .history-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
