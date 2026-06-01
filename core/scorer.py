@@ -35,53 +35,85 @@ def _get_purity_tier(total_score: int) -> tuple[str, str]:
 
 
 def score_repo(repo_data: dict[str, Any]) -> dict[str, Any]:
-    """Score a single repository based on its primary language.
+    """Score a single repository based on all its supported languages.
 
-    Looks up the primary language in LANGUAGE_ALIASES (case-insensitive).
-    If no match is found, marks the repo as unscored. Otherwise, computes
-    all category scores, percentages, total score, and purity tier.
+    Calculates the weighted average OOP purity score of all supported languages
+    found in the repository, based on their byte sizes. If no supported
+    languages are found, marks the repository as unscored.
 
     Args:
         repo_data: Repository data dictionary from the scraper.
 
     Returns:
-        The repo_data dictionary augmented with scoring fields.
+        The repo_data dictionary augmented with multi-language scoring fields.
     """
     result = dict(repo_data)
+    languages_used = dict(repo_data.get("languages_used", {}))
     primary_lang = repo_data.get("primary_language", "Unknown")
-    matched_key = LANGUAGE_ALIASES.get(primary_lang.lower())
 
-    if not matched_key or matched_key not in LANGUAGE_SCORES:
+    # Fallback to primary language if languages_used is empty
+    if not languages_used and primary_lang != "Unknown":
+        languages_used = {primary_lang: 1000}
+
+    supported_langs = []
+    for lang_name, bytes_count in languages_used.items():
+        matched_key = LANGUAGE_ALIASES.get(lang_name.lower())
+        if matched_key and matched_key in LANGUAGE_SCORES:
+            # Calculate category scores for this language
+            sub_scores = LANGUAGE_SCORES[matched_key]
+            cat_scores = {}
+            for cat_key in CATEGORY_LABELS:
+                cat_subs = sub_scores.get(cat_key, {})
+                cat_scores[cat_key] = sum(cat_subs.values())
+            lang_total_score = sum(cat_scores.values())
+            supported_langs.append({
+                "language": matched_key,
+                "bytes": bytes_count,
+                "sub_scores": sub_scores,
+                "category_scores": cat_scores,
+                "total_score": lang_total_score
+            })
+
+    if not supported_langs:
         result["scored"] = False
-        result["reason"] = f"Unsupported language: {primary_lang}"
+        result["reason"] = f"Unsupported language(s): {', '.join(languages_used.keys()) or primary_lang}"
         logger.info(
-            "Repo '%s' skipped — unsupported language: %s",
+            "Repo '%s' skipped — unsupported languages: %s",
             repo_data.get("full_name", "unknown"),
-            primary_lang,
+            list(languages_used.keys()) or primary_lang,
         )
         return result
 
-    sub_scores = LANGUAGE_SCORES[matched_key]
+    # Sort supported languages by byte size descending
+    supported_langs.sort(key=lambda x: x["bytes"], reverse=True)
+    total_supported_bytes = sum(x["bytes"] for x in supported_langs)
 
-    category_scores: dict[str, int] = {}
+    # Compute percentages of supported code
+    for item in supported_langs:
+        item["percentage"] = round((item["bytes"] / total_supported_bytes) * 100, 2)
+
+    dominant_lang_key = supported_langs[0]["language"]
+
+    # Compute weighted average category scores
+    category_scores: dict[str, float] = {}
     category_percentages: dict[str, float] = {}
-
     for cat_key in CATEGORY_LABELS:
-        cat_subs = sub_scores.get(cat_key, {})
-        cat_total = sum(cat_subs.values())
-        category_scores[cat_key] = cat_total
+        weighted_sum = sum(x["category_scores"][cat_key] * x["bytes"] for x in supported_langs)
+        cat_val = round(weighted_sum / total_supported_bytes, 2)
+        category_scores[cat_key] = cat_val
         cat_max = CATEGORY_MAX.get(cat_key, 1)
-        category_percentages[cat_key] = round(
-            (cat_total / cat_max) * 100, 2
-        )
+        category_percentages[cat_key] = round((cat_val / cat_max) * 100, 2)
 
-    total_score = sum(category_scores.values())
+    # Compute weighted average total score
+    weighted_total = sum(x["total_score"] * x["bytes"] for x in supported_langs) / total_supported_bytes
+    total_score = int(round(weighted_total))
     total_percentage = round((total_score / 100) * 100, 2)
     tier_name, tier_color = _get_purity_tier(total_score)
 
     result["scored"] = True
-    result["matched_language"] = matched_key
-    result["sub_scores"] = sub_scores
+    result["matched_language"] = dominant_lang_key  # dominant language for backward compatibility
+    result["languages_scored"] = supported_langs
+    result["sub_scores"] = supported_langs[0]["sub_scores"]  # dominant language fallback
     result["category_scores"] = category_scores
     result["category_percentages"] = category_percentages
     result["total_score"] = total_score
@@ -90,9 +122,9 @@ def score_repo(repo_data: dict[str, Any]) -> dict[str, Any]:
     result["tier_color"] = tier_color
 
     logger.info(
-        "Scored '%s' (%s): %d/100 — %s",
+        "Scored '%s' (%s dominant): %d/100 — %s",
         repo_data.get("full_name", "unknown"),
-        matched_key,
+        dominant_lang_key,
         total_score,
         tier_name,
     )
@@ -119,7 +151,7 @@ def score_all(
     scored_only = [r for r in scored_repos if r.get("scored")]
     unscored_only = [r for r in scored_repos if not r.get("scored")]
 
-    # Language distribution
+    # Language distribution (using the dominant language of each repository)
     language_distribution: dict[str, int] = {}
     for repo in scored_only:
         lang = repo.get("matched_language", "Unknown")
@@ -131,14 +163,15 @@ def score_all(
         tier = repo.get("purity_tier", "Unknown")
         tier_distribution[tier] = tier_distribution.get(tier, 0) + 1
 
-    # Average score by language
+    # Average score by language (computed across all repositories where the language was scored)
     lang_score_sums: dict[str, float] = {}
     lang_score_counts: dict[str, int] = {}
     for repo in scored_only:
-        lang = repo.get("matched_language", "Unknown")
-        score = repo.get("total_score", 0)
-        lang_score_sums[lang] = lang_score_sums.get(lang, 0) + score
-        lang_score_counts[lang] = lang_score_counts.get(lang, 0) + 1
+        for item in repo.get("languages_scored", []):
+            lang = item["language"]
+            score = item["total_score"]
+            lang_score_sums[lang] = lang_score_sums.get(lang, 0) + score
+            lang_score_counts[lang] = lang_score_counts.get(lang, 0) + 1
 
     avg_score_by_language: dict[str, float] = {}
     for lang in lang_score_sums:
