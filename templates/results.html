@@ -141,7 +141,7 @@
                 <tbody id="results-tbody">
                     {% for repo in scored_repos %}
                     <tr class="repo-row" data-name="{{ repo.full_name | lower }}" 
-                        data-language="{{ repo.get('matched_language', repo.primary_language) | lower }}"
+                        data-language="{% if repo.languages_scored %}{% for l in repo.languages_scored %}{{ l.language | lower }} {% endfor %}{% else %}{{ repo.get('matched_language', repo.primary_language) | lower }}{% endif %}"
                         data-score="{{ repo.get('total_score', 0) }}"
                         data-stars="{{ repo.stars }}"
                         data-forks="{{ repo.forks }}"
@@ -151,7 +151,15 @@
                                 {{ repo.full_name }}
                             </a>
                         </td>
-                        <td>{{ repo.get('matched_language', repo.primary_language) }}</td>
+                        <td>
+                            {% if repo.languages_scored %}
+                                {% for l in repo.languages_scored %}
+                                    {{ l.language }} ({% if l.percentage % 1 == 0 %}{{ l.percentage | int }}{% else %}{{ l.percentage | round(2) }}{% endif %}%){% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {{ repo.get('matched_language', repo.primary_language) }}
+                            {% endif %}
+                        </td>
                         <td>
                             {% if repo.scored %}
                                 <span class="score-value">{{ repo.total_score }}/100</span>

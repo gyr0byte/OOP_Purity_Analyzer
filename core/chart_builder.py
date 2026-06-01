@@ -63,6 +63,22 @@ def _get_scored_only(scored_repos: list[dict[str, Any]]) -> list[dict[str, Any]]
     return [r for r in scored_repos if r.get("scored")]
 
 
+def _format_languages_scored(repo: dict[str, Any]) -> str:
+    """Format the list of scored languages into a single string with percentages.
+
+    E.g. "Java (98%), Kotlin (2%)"
+    """
+    langs = repo.get("languages_scored", [])
+    if not langs:
+        return repo.get("matched_language", "Unknown")
+    parts = []
+    for l in langs:
+        pct = l['percentage']
+        pct_str = f"{int(pct)}" if pct.is_integer() else f"{pct:.2f}"
+        parts.append(f"{l['language']} ({pct_str}%)")
+    return ", ".join(parts)
+
+
 def bar_chart_total_scores(scored_repos: list[dict[str, Any]]) -> str:
     """Horizontal bar chart of total OOP purity scores by repository.
 
@@ -83,7 +99,7 @@ def bar_chart_total_scores(scored_repos: list[dict[str, Any]]) -> str:
     scores = [r["total_score"] for r in repos_sorted]
     colors = [r["tier_color"] for r in repos_sorted]
     hover_texts = [
-        f"Language: {r['matched_language']}<br>"
+        f"Languages: {_format_languages_scored(r)}<br>"
         f"Score: {r['total_score']}/100<br>"
         f"Tier: {r['purity_tier']}<br>"
         f"Stars: {r['stars']:,}"
