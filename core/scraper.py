@@ -334,6 +334,9 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2009-08-20T00:00:00Z",
             "updated_at": "2026-05-20T00:00:00Z",
             "size_kb": 150000,
+            "file_metrics": {
+                "Smalltalk": [{"class_count": 8, "private_members": 0, "protected_members": 0, "public_members": 20, "inheritance_count": 5, "polymorphism_count": 0, "total_lines": 400, "total_functions": 0}]
+            },
         },
         {
             "name": "spring-framework",
@@ -349,6 +352,10 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2010-06-15T00:00:00Z",
             "updated_at": "2026-05-29T00:00:00Z",
             "size_kb": 250000,
+            "file_metrics": {
+                "Java": [{"class_count": 6, "private_members": 15, "protected_members": 8, "public_members": 12, "inheritance_count": 4, "polymorphism_count": 6, "total_lines": 450, "total_functions": 12}],
+                "Kotlin": [{"class_count": 2, "private_members": 4, "protected_members": 2, "public_members": 8, "inheritance_count": 1, "polymorphism_count": 2, "total_lines": 120, "total_functions": 4}]
+            },
         },
         {
             "name": "django",
@@ -364,6 +371,9 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2012-04-28T00:00:00Z",
             "updated_at": "2026-05-30T00:00:00Z",
             "size_kb": 120000,
+            "file_metrics": {
+                "Python": [{"class_count": 10, "private_members": 12, "protected_members": 8, "public_members": 24, "inheritance_count": 5, "polymorphism_count": 0, "total_lines": 700, "total_functions": 20}]
+            },
         },
         {
             "name": "react",
@@ -379,6 +389,9 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2013-05-24T00:00:00Z",
             "updated_at": "2026-05-31T00:00:00Z",
             "size_kb": 320000,
+            "file_metrics": {
+                "JavaScript": [{"class_count": 0, "private_members": 0, "protected_members": 0, "public_members": 0, "inheritance_count": 0, "polymorphism_count": 0, "total_lines": 500, "total_functions": 45}]
+            },
         },
         {
             "name": "tensorflow",
@@ -394,6 +407,10 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2015-11-07T00:00:00Z",
             "updated_at": "2026-05-30T00:00:00Z",
             "size_kb": 950000,
+            "file_metrics": {
+                "C++": [{"class_count": 7, "private_members": 22, "protected_members": 8, "public_members": 14, "inheritance_count": 3, "polymorphism_count": 7, "total_lines": 550, "total_functions": 10}],
+                "Python": [{"class_count": 4, "private_members": 8, "protected_members": 6, "public_members": 12, "inheritance_count": 2, "polymorphism_count": 0, "total_lines": 300, "total_functions": 8}]
+            },
         },
         {
             "name": "rails",
@@ -409,6 +426,9 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2008-04-11T00:00:00Z",
             "updated_at": "2026-05-28T00:00:00Z",
             "size_kb": 180000,
+            "file_metrics": {
+                "Ruby": [{"class_count": 8, "private_members": 10, "protected_members": 4, "public_members": 16, "inheritance_count": 4, "polymorphism_count": 0, "total_lines": 500, "total_functions": 14}]
+            },
         },
         {
             "name": "roslyn",
@@ -424,6 +444,9 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2011-12-02T00:00:00Z",
             "updated_at": "2026-05-25T00:00:00Z",
             "size_kb": 450000,
+            "file_metrics": {
+                "C#": [{"class_count": 12, "private_members": 30, "protected_members": 15, "public_members": 25, "inheritance_count": 8, "polymorphism_count": 12, "total_lines": 900, "total_functions": 24}]
+            },
         },
         {
             "name": "kotlin",
@@ -439,6 +462,10 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2012-02-13T00:00:00Z",
             "updated_at": "2026-05-29T00:00:00Z",
             "size_kb": 620000,
+            "file_metrics": {
+                "Kotlin": [{"class_count": 8, "private_members": 16, "protected_members": 10, "public_members": 20, "inheritance_count": 5, "polymorphism_count": 8, "total_lines": 600, "total_functions": 18}],
+                "Java": [{"class_count": 4, "private_members": 8, "protected_members": 4, "public_members": 10, "inheritance_count": 2, "polymorphism_count": 4, "total_lines": 350, "total_functions": 8}]
+            },
         },
         {
             "name": "linux",
@@ -454,6 +481,7 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
             "created_at": "2011-09-04T00:00:00Z",
             "updated_at": "2026-05-31T00:00:00Z",
             "size_kb": 1200000,
+            "file_metrics": {},
         }
     ]
 
@@ -483,6 +511,9 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
                     "created_at": "2020-01-01T00:00:00Z",
                     "updated_at": "2026-01-01T00:00:00Z",
                     "size_kb": 1000,
+                    "file_metrics": {
+                        "Python": [{"class_count": 5, "private_members": 5, "protected_members": 2, "public_members": 10, "inheritance_count": 2, "polymorphism_count": 0, "total_lines": 300, "total_functions": 10}]
+                    },
                 })
         return result
     else:
