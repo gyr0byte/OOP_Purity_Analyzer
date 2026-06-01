@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}OOP Purity Analyzer — Results Dashboard{% endblock %}
+
+{% block content %}
+<!-- Summary Stats -->
+<section class="summary-bar" id="summary-section">
+    <div class="summary-container">
+        <h1 class="dashboard-title">Analysis Results</h1>
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card" id="stat-total">
+                <span class="stat-value">{{ summary.total_repos }}</span>
+                <span class="stat-label">Total Repos</span>
+            </div>
+            <div class="stat-card" id="stat-scored">
+                <span class="stat-value">{{ summary.scored_repos }}</span>
+                <span class="stat-label">Scored</span>
+            </div>
+            <div class="stat-card" id="stat-unscored">
+                <span class="stat-value">{{ summary.unscored_repos }}</span>
+                <span class="stat-label">Unsupported</span>
+            </div>
+            <div class="stat-card" id="stat-languages">
+                <span class="stat-value">{{ summary.language_distribution | length }}</span>
+                <span class="stat-label">Languages</span>
+            </div>
+            <div class="stat-card" id="stat-tier">
+                <span class="stat-value stat-tier">{{ most_common_tier }}</span>
+                <span class="stat-label">Most Common Tier</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Charts Dashboard -->
+<section class="charts-section" id="charts-section">
+    <div class="charts-container">
+        <!-- Row 1 -->
+        <div class="chart-panel chart-full" id="panel-bar-total">
+            <div class="chart-header">
+                <h3 class="chart-title">📊 OOP Purity Scores by Repository</h3>
+            </div>
+            <div id="chart-bar-total" class="chart-render"></div>
+        </div>
+
+        <div class="chart-grid-2col">
+            <div class="chart-panel" id="panel-donut">
+                <div class="chart-header">
+                    <h3 class="chart-title">🍩 Tier Distribution</h3>
+                </div>
+                <div id="chart-donut" class="chart-render"></div>
+            </div>
+
+            <div class="chart-panel" id="panel-scatter">
+                <div class="chart-header">
+                    <h3 class="chart-title">🔬 Score vs. Popularity</h3>
+                </div>
+                <div id="chart-scatter" class="chart-render"></div>
+            </div>
+        </div>
+
+        <!-- Radar Charts -->
+        {% if radar_charts %}
+        <div class="chart-panel chart-full" id="panel-radars">
+            <div class="chart-header">
+                <h3 class="chart-title">🕸️ Category Profiles by Language</h3>
+            </div>
+            <div class="radar-grid">
+                {% for lang, chart_json in radar_charts.items() %}
+                <div class="radar-item">
+                    <div id="chart-radar-{{ lang | replace(' ', '-') | replace('#', 'sharp') | replace('+', 'plus') }}" class="chart-render chart-render-radar"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="chart-panel chart-full" id="panel-heatmap">
+            <div class="chart-header">
+                <h3 class="chart-title">🗺️ Sub-Criterion Score Heatmap</h3>
+            </div>
+            <div id="chart-heatmap" class="chart-render"></div>
+        </div>
+
+        <div class="chart-grid-2col">
+            <div class="chart-panel" id="panel-grouped">
+                <div class="chart-header">
+                    <h3 class="chart-title">📈 Category Comparison</h3>
+                </div>
+                <div id="chart-grouped" class="chart-render"></div>
+            </div>
+
+            <div class="chart-panel" id="panel-timeline">
+                <div class="chart-header">
+                    <h3 class="chart-title">📅 Score Over Time</h3>
+                </div>
+                <div id="chart-timeline" class="chart-render"></div>
+            </div>
+        </div>
+
+        <div class="chart-panel chart-full" id="panel-treemap">
+            <div class="chart-header">
+                <h3 class="chart-title">🌳 Repository Purity Treemap</h3>
+            </div>
+            <div id="chart-treemap" class="chart-render"></div>
+        </div>
+
+        <div class="chart-panel chart-full" id="panel-stacked">
+            <div class="chart-header">
+                <h3 class="chart-title">🧱 Category Contribution per Repository</h3>
+            </div>
+            <div id="chart-stacked" class="chart-render"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Repository Table -->
+<section class="table-section" id="table-section">
+    <div class="table-container">
+        <div class="table-header-bar">
+            <h2 class="section-title">Repository Details</h2>
+            <div class="table-actions">
+                <input type="text" id="table-filter" class="form-input form-input-small" placeholder="Filter repos...">
+                <a href="{{ url_for('export_csv') }}" class="btn btn-secondary" id="export-csv-btn">📥 Export CSV</a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline" id="analyze-again-btn">🔄 Analyze Again</a>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="results-table" id="results-table">
+                <thead>
+                    <tr>
+                        <th data-sort="name" class="sortable" id="th-name">Name ↕</th>
+                        <th data-sort="language" class="sortable" id="th-language">Language ↕</th>
+                        <th data-sort="score" class="sortable" id="th-score">Score ↕</th>
+                        <th data-sort="tier" id="th-tier">Tier</th>
+                        <th data-sort="stars" class="sortable" id="th-stars">Stars ↕</th>
+                        <th data-sort="forks" class="sortable" id="th-forks">Forks ↕</th>
+                        <th data-sort="created" class="sortable" id="th-created">Created ↕</th>
+                    </tr>
+                </thead>
+                <tbody id="results-tbody">
+                    {% for repo in scored_repos %}
+                    <tr class="repo-row" data-name="{{ repo.full_name | lower }}" 
+                        data-language="{{ repo.get('matched_language', repo.primary_language) | lower }}"
+                        data-score="{{ repo.get('total_score', 0) }}"
+                        data-stars="{{ repo.stars }}"
+                        data-forks="{{ repo.forks }}"
+                        data-created="{{ repo.created_at }}">
+                        <td>
+                            <a href="{{ repo.url }}" target="_blank" rel="noopener" class="repo-link">
+                                {{ repo.full_name }}
+                            </a>
+                        </td>
+                        <td>{{ repo.get('matched_language', repo.primary_language) }}</td>
+                        <td>
+                            {% if repo.scored %}
+                                <span class="score-value">{{ repo.total_score }}/100</span>
+                            {% else %}
+                                <span class="score-na">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if repo.scored %}
+                                <span class="tier-badge" style="background-color: {{ repo.tier_color }}20; color: {{ repo.tier_color }}; border: 1px solid {{ repo.tier_color }}40;">
+                                    {{ repo.purity_tier }}
+                                </span>
+                            {% else %}
+                                <span class="tier-badge tier-unsupported">Unsupported</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ "{:,}".format(repo.stars) }}</td>
+                        <td>{{ "{:,}".format(repo.forks) }}</td>
+                        <td>{{ repo.created_at[:10] if repo.created_at else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Render all charts
+    var chartMappings = {
+        'chart-bar-total': {{ charts.bar_total | safe }},
+        'chart-donut': {{ charts.donut | safe }},
+        'chart-scatter': {{ charts.scatter | safe }},
+        'chart-heatmap': {{ charts.heatmap | safe }},
+        'chart-grouped': {{ charts.grouped_bar | safe }},
+        'chart-timeline': {{ charts.timeline | safe }},
+        'chart-treemap': {{ charts.treemap | safe }},
+        'chart-stacked': {{ charts.stacked_bar | safe }}
+    };
+
+    Object.keys(chartMappings).forEach(function(divId) {
+        renderChart(divId, chartMappings[divId]);
+    });
+
+    // Render radar charts
+    {% for lang, chart_json in radar_charts.items() %}
+    renderChart(
+        'chart-radar-{{ lang | replace(" ", "-") | replace("#", "sharp") | replace("+", "plus") }}',
+        {{ chart_json | safe }}
+    );
+    {% endfor %}
+
+    // Table filtering
+    var filterInput = document.getElementById('table-filter');
+    if (filterInput) {
+        filterInput.addEventListener('input', function() {
+            var query = this.value.toLowerCase();
+            var rows = document.querySelectorAll('.repo-row');
+            rows.forEach(function(row) {
+                var name = row.getAttribute('data-name') || '';
+                var lang = row.getAttribute('data-language') || '';
+                var visible = name.indexOf(query) !== -1 || lang.indexOf(query) !== -1;
+                row.style.display = visible ? '' : 'none';
+            });
+        });
+    }
+
+    // Table sorting
+    var sortableHeaders = document.querySelectorAll('.sortable');
+    var currentSort = { column: null, ascending: true };
+
+    sortableHeaders.forEach(function(header) {
+        header.addEventListener('click', function() {
+            var column = this.getAttribute('data-sort');
+            var ascending = currentSort.column === column ? !currentSort.ascending : true;
+            currentSort = { column: column, ascending: ascending };
+
+            var tbody = document.getElementById('results-tbody');
+            var rows = Array.from(tbody.querySelectorAll('.repo-row'));
+
+            rows.sort(function(a, b) {
+                var aVal, bVal;
+                switch (column) {
+                    case 'name':
+                        aVal = a.getAttribute('data-name');
+                        bVal = b.getAttribute('data-name');
+                        return ascending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    case 'language':
+                        aVal = a.getAttribute('data-language');
+                        bVal = b.getAttribute('data-language');
+                        return ascending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    case 'score':
+                        aVal = parseFloat(a.getAttribute('data-score')) || 0;
+                        bVal = parseFloat(b.getAttribute('data-score')) || 0;
+                        return ascending ? aVal - bVal : bVal - aVal;
+                    case 'stars':
+                        aVal = parseInt(a.getAttribute('data-stars')) || 0;
+                        bVal = parseInt(b.getAttribute('data-stars')) || 0;
+                        return ascending ? aVal - bVal : bVal - aVal;
+                    case 'forks':
+                        aVal = parseInt(a.getAttribute('data-forks')) || 0;
+                        bVal = parseInt(b.getAttribute('data-forks')) || 0;
+                        return ascending ? aVal - bVal : bVal - aVal;
+                    case 'created':
+                        aVal = a.getAttribute('data-created') || '';
+                        bVal = b.getAttribute('data-created') || '';
+                        return ascending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    default:
+                        return 0;
+                }
+            });
+
+            rows.forEach(function(row) { tbody.appendChild(row); });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}OOP Purity Analyzer — Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" id="hero-section">
+    <div class="hero-bg-pattern"></div>
+    <div class="hero-content">
+        <div class="hero-badge">Academic Research Tool</div>
+        <h1 class="hero-title">OOP Purity <span class="accent">Analyzer</span></h1>
+        <p class="hero-description">
+            Quantitatively measure OOP purity across GitHub repositories using a 
+            7-category, 24-sub-criterion academic scoring framework.
+        </p>
+    </div>
+</section>
+
+<!-- Input Form Section -->
+<section class="form-section" id="form-section">
+    <div class="form-container">
+        <h2 class="section-title">Analyze Repositories</h2>
+        
+        <!-- Tab Navigation -->
+        <div class="tab-nav" id="tab-nav">
+            <button class="tab-btn active" data-tab="urls" id="tab-btn-urls" type="button">
+                <span class="tab-icon">🔗</span> By URL
+            </button>
+            <button class="tab-btn" data-tab="search" id="tab-btn-search" type="button">
+                <span class="tab-icon">🔍</span> By Topic
+            </button>
+            <button class="tab-btn" data-tab="user" id="tab-btn-user" type="button">
+                <span class="tab-icon">👤</span> By User
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form action="{{ url_for('analyze') }}" method="POST" id="analyze-form" class="analyze-form">
+            <input type="hidden" name="mode" id="mode-input" value="urls">
+
+            <!-- Tab: By URL -->
+            <div class="tab-content active" id="tab-urls">
+                <label class="form-label" for="input-urls">GitHub Repository URLs</label>
+                <p class="form-hint">Enter one full GitHub URL per line (e.g. https://github.com/django/django)</p>
+                <textarea 
+                    name="input_data" 
+                    id="input-urls" 
+                    class="form-textarea"
+                    rows="6"
+                    placeholder="https://github.com/django/django&#10;https://github.com/spring-projects/spring-framework&#10;https://github.com/rails/rails"
+                ></textarea>
+            </div>
+
+            <!-- Tab: By Topic -->
+            <div class="tab-content" id="tab-search">
+                <label class="form-label" for="input-search">Search Keyword or Topic</label>
+                <p class="form-hint">Search for repositories by topic, keyword, or technology</p>
+                <input 
+                    type="text" 
+                    name="input_data" 
+                    id="input-search" 
+                    class="form-input"
+                    placeholder='e.g. "machine learning", "web framework", "game engine"'
+                    disabled
+                >
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="limit-search">Max Repositories</label>
+                        <input type="number" name="limit" id="limit-search" class="form-input form-input-small" 
+                               value="20" min="1" max="100" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: By User -->
+            <div class="tab-content" id="tab-user">
+                <label class="form-label" for="input-user">GitHub Username</label>
+                <p class="form-hint">Fetch public repositories from a GitHub user</p>
+                <input 
+                    type="text" 
+                    name="input_data" 
+                    id="input-user" 
+                    class="form-input"
+                    placeholder="e.g. torvalds, gvanrossum, dhh"
+                    disabled
+                >
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="limit-user">Max Repositories</label>
+                        <input type="number" name="limit" id="limit-user" class="form-input form-input-small" 
+                               value="20" min="1" max="100" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-primary btn-submit" id="submit-btn">
+                <span class="btn-text">Analyze Repositories</span>
+                <span class="btn-spinner" id="btn-spinner"></span>
+            </button>
+        </form>
+    </div>
+</section>
+
+<!-- Categories Overview -->
+<section class="categories-section" id="categories-section">
+    <div class="categories-container">
+        <h2 class="section-title">Scoring Categories</h2>
+        <p class="section-subtitle">The OOP Purity Framework evaluates languages across 7 core dimensions</p>
+        <div class="category-grid">
+            <div class="category-card" id="cat-c1">
+                <div class="cat-header"><span class="cat-code">C1</span><span class="cat-max">20 pts</span></div>
+                <h3 class="cat-name">Encapsulation</h3>
+                <p class="cat-desc">Data hiding, access control, enforcement strength, and default privacy posture</p>
+            </div>
+            <div class="category-card" id="cat-c2">
+                <div class="cat-header"><span class="cat-code">C2</span><span class="cat-max">15 pts</span></div>
+                <h3 class="cat-name">Inheritance</h3>
+                <p class="cat-desc">Single/multiple inheritance, method overriding, type safety, and constructor chains</p>
+            </div>
+            <div class="category-card" id="cat-c3">
+                <div class="cat-header"><span class="cat-code">C3</span><span class="cat-max">15 pts</span></div>
+                <h3 class="cat-name">Polymorphism</h3>
+                <p class="cat-desc">Subtype polymorphism, method overloading, generics, and dynamic dispatch</p>
+            </div>
+            <div class="category-card" id="cat-c4">
+                <div class="cat-header"><span class="cat-code">C4</span><span class="cat-max">15 pts</span></div>
+                <h3 class="cat-name">Abstraction</h3>
+                <p class="cat-desc">Abstract classes, interfaces, contract enforcement, and bounded polymorphism</p>
+            </div>
+            <div class="category-card" id="cat-c5">
+                <div class="cat-header"><span class="cat-code">C5</span><span class="cat-max">15 pts</span></div>
+                <h3 class="cat-name">Object-Centric Design</h3>
+                <p class="cat-desc">Everything-is-an-object, class requirement, message passing, and metaclasses</p>
+            </div>
+            <div class="category-card" id="cat-c6">
+                <div class="cat-header"><span class="cat-code">C6</span><span class="cat-max">10 pts</span></div>
+                <h3 class="cat-name">OOP Enforcement</h3>
+                <p class="cat-desc">Non-OOP code difficulty, structural enforcement, and paradigm dilution resistance</p>
+            </div>
+            <div class="category-card" id="cat-c7">
+                <div class="cat-header"><span class="cat-code">C7</span><span class="cat-max">10 pts</span></div>
+                <h3 class="cat-name">Type System & Supplementary</h3>
+                <p class="cat-desc">Type system alignment, runtime type info, and design pattern expressibility</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const modeInput = document.getElementById('mode-input');
+    const form = document.getElementById('analyze-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // Tab switching
+    tabBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const tab = this.getAttribute('data-tab');
+
+            // Update active tab button
+            tabBtns.forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+
+            // Update active tab content and disable inactive inputs
+            tabContents.forEach(function(tc) {
+                tc.classList.remove('active');
+                var inputs = tc.querySelectorAll('input, textarea');
+                inputs.forEach(function(inp) { inp.disabled = true; });
+            });
+
+            var activeTab = document.getElementById('tab-' + tab);
+            activeTab.classList.add('active');
+            var activeInputs = activeTab.querySelectorAll('input, textarea');
+            activeInputs.forEach(function(inp) { inp.disabled = false; });
+
+            // Update hidden mode field
+            modeInput.value = tab;
+        });
+    });
+
+    // Loading state on submit
+    form.addEventListener('submit', function() {
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

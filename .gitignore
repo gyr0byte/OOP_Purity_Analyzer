@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.dist/
+.build/
+.venv/
+venv/
+
+# Environments
+.env
+.env.*
+
+# Flask
+instance/
+flask_session/
+
+# Logs
+*.log
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Test/coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Misc
+*.sqlite3

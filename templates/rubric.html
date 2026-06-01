@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}OOP Purity Analyzer — Scoring Rubric{% endblock %}
+
+{% block content %}
+<section class="rubric-section" id="rubric-section">
+    <div class="rubric-container">
+        <h1 class="page-title">OOP Purity Scoring Rubric</h1>
+        <p class="page-subtitle">Complete reference for the 7-category, 24-sub-criterion academic scoring framework. Total maximum score: <strong>100 points</strong>.</p>
+
+        <div class="tier-definitions" id="tier-definitions">
+            <h2 class="section-title">Purity Tier Definitions</h2>
+            <div class="tier-grid">
+                {% for low, high, tier_name, color in purity_tiers %}
+                <div class="tier-card" style="border-left: 4px solid {{ color }};">
+                    <span class="tier-range" style="color: {{ color }};">{{ low }}–{{ high }}</span>
+                    <span class="tier-name">{{ tier_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% set rubric_data = [
+            ("C1", "Encapsulation", 20, [
+                ("C1.1", "Data-Hiding Mechanism", 5, "Language has a proper strictly-private declaration; no external code can access private members at all"),
+                ("C1.2", "Access Control Granularity", 4, "4+ distinct access levels enforced at compile or load time"),
+                ("C1.3", "Enforcement Strength", 4, "Violations caught at compile time; accessing a private member causes a compilation error"),
+                ("C1.4", "Bypass/Reflection Resistance", 4, "No built-in way to bypass access control; reflection cannot modify private fields without explicit class permission"),
+                ("C1.5", "Default Encapsulation Posture", 3, "Members default to private or stricter unless explicitly made public")
+            ]),
+            ("C2", "Inheritance", 15, [
+                ("C2.1", "Single Inheritance Support", 3, "Full single inheritance: methods and attributes inherited, overriding supported, super calls work"),
+                ("C2.2", "Multiple/Interface Inheritance", 3, "Full multiple implementation inheritance, OR multiple interface/trait inheritance with default method implementations"),
+                ("C2.3", "Method Overriding", 3, "Overriding supported and verified at compile time"),
+                ("C2.4", "Type Safety of Inheritance", 3, "Static type system enforces Liskov Substitution Principle; compiler verifies subtype compatibility"),
+                ("C2.5", "Constructor/Initialiser Inheritance", 3, "Subclass constructor calls parent constructor; language enforces full initialisation chain")
+            ]),
+            ("C3", "Polymorphism", 15, [
+                ("C3.1", "Subtype/Runtime Polymorphism", 5, "Runtime polymorphism via virtual dispatch by default for all overridden methods"),
+                ("C3.2", "Ad-hoc Polymorphism (Overloading)", 3, "Method overloading supported, resolved at compile time"),
+                ("C3.3", "Parametric Polymorphism (Generics)", 4, "Statically-typed generics/templates; type parameters checked at compile time"),
+                ("C3.4", "Dynamic Dispatch Mechanism", 3, "Virtual method table or equivalent is part of the language spec")
+            ]),
+            ("C4", "Abstraction", 15, [
+                ("C4.1", "Abstract Class Support", 4, "Abstract classes are a first-class construct; compiler prevents direct instantiation"),
+                ("C4.2", "Interface/Contract Definition", 4, "Formal interface or protocol construct; verified at compile time"),
+                ("C4.3", "Enforcement of Abstract Contracts", 4, "Missing abstract members cause a compile error"),
+                ("C4.4", "Abstraction via Type System", 3, "Bounded polymorphism supported (upper-bounded generics, F-bounded quantification)")
+            ]),
+            ("C5", "Object-Centric Design", 15, [
+                ("C5.1", "Everything-Is-an-Object", 5, "All values are objects with callable methods"),
+                ("C5.2", "Class Requirement", 4, "All executable code must be inside a class"),
+                ("C5.3", "Message Passing Model", 3, "All computation expressed as sending messages to objects"),
+                ("C5.4", "Classes as First-Class Objects", 3, "Classes are objects: storable, passable, introspectable; metaclass system in spec")
+            ]),
+            ("C6", "OOP Enforcement & Non-OOP Resistance", 10, [
+                ("C6.1", "Difficulty of Non-OOP Code", 4, "Writing a non-trivial program in purely procedural/functional style is impossible"),
+                ("C6.2", "Structural OOP Enforcement", 3, "Language spec requires all state in objects"),
+                ("C6.3", "Multi-Paradigm Dilution", 3, "Single-paradigm: pure OOP only")
+            ]),
+            ("C7", "Type System & Supplementary OOP Features", 10, [
+                ("C7.1", "Type System OOP Alignment", 4, "Statically typed with nominal type system and class-hierarchy-based subtype checking"),
+                ("C7.2", "Runtime Type Information (RTTI)", 3, "Built-in RTTI for runtime type queries and class hierarchy navigation"),
+                ("C7.3", "Design Pattern Expressibility", 3, "All standard GoF patterns implementable with native OOP constructs")
+            ])
+        ] %}
+
+        {% for cat_code, cat_name, cat_max, sub_criteria in rubric_data %}
+        <div class="rubric-category" id="rubric-{{ cat_code | lower }}">
+            <div class="rubric-cat-header">
+                <span class="rubric-cat-code">{{ cat_code }}</span>
+                <h2 class="rubric-cat-name">{{ cat_name }}</h2>
+                <span class="rubric-cat-max">Max: {{ cat_max }} pts</span>
+            </div>
+            <table class="rubric-table">
+                <thead><tr><th>Sub-Criterion</th><th class="max-col">Max</th><th>Description of Maximum Score</th></tr></thead>
+                <tbody>
+                    {% for sub_code, sub_name, sub_max, sub_desc in sub_criteria %}
+                    <tr>
+                        <td>{{ sub_code }} {{ sub_name }}</td>
+                        <td class="max-col score-max">{{ sub_max }}</td>
+                        <td>{{ sub_desc }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+
+        <div class="scores-reference" id="scores-reference">
+            <h2 class="section-title">Language Score Reference</h2>
+            <div class="scores-table-wrapper">
+                <table class="scores-ref-table">
+                    <thead>
+                        <tr>
+                            <th>Language</th>
+                            {% for cat in category_labels %}<th>{{ cat }} ({{ category_max[cat] }})</th>{% endfor %}
+                            <th class="total-col">Total (100)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lang, scores in language_scores.items() %}
+                        <tr>
+                            <td class="lang-name">{{ lang }}</td>
+                            {% set ns = namespace(total=0) %}
+                            {% for cat in category_labels %}
+                                {% set cat_score = scores[cat].values() | sum %}
+                                {% set ns.total = ns.total + cat_score %}
+                                <td>{{ cat_score }}</td>
+                            {% endfor %}
+                            <td class="total-col"><strong>{{ ns.total }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="rubric-back">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">← Back to Analyzer</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

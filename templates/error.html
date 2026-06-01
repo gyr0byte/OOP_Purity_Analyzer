@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}OOP Purity Analyzer — Error{% endblock %}
+
+{% block content %}
+<section class="error-section" id="error-section">
+    <div class="error-container">
+        <div class="error-icon" id="error-icon">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="38" stroke="#e74c3c" stroke-width="3" fill="#e74c3c20"/>
+                <line x1="28" y1="28" x2="52" y2="52" stroke="#e74c3c" stroke-width="3" stroke-linecap="round"/>
+                <line x1="52" y1="28" x2="28" y2="52" stroke="#e74c3c" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <h1 class="error-title">Something Went Wrong</h1>
+        <p class="error-message" id="error-message">
+            {{ error_message | default("An unexpected error occurred. Please try again.") }}
+        </p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary" id="try-again-btn">← Try Again</a>
+    </div>
+</section>
+{% endblock %}
