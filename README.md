@@ -1,177 +1,152 @@
-# OOP Purity Analyzer
+# 📊 OOP Purity Analyzer v2.0
 
-A quantitative research instrument that scrapes GitHub repositories, identifies their primary programming language, applies a predefined academic OOP Purity scoring rubric, and presents all findings through an interactive web dashboard. The application evaluates languages across 7 core OOP categories and 24 sub-criteria to produce a total purity score out of 100 points.
+A premium, full-stack quantitative software engineering and academic research instrument designed to evaluate the Object-Oriented Programming (OOP) purity of GitHub repositories. Moving beyond static, language-level assumptions, **OOP Purity Analyzer v2.0** uses a custom **AST (Abstract Syntax Tree) Code Analysis Engine** to parse actual repository source code alongside a comprehensive 7-category, 24-sub-criterion academic rubric.
 
-This tool is designed for academic and comparative research into the object-oriented purity of programming languages. The scoring rubric is based on authoritative language specifications and peer-reviewed academic literature, providing a rigorous, reproducible framework for evaluating how faithfully a language adheres to OOP principles such as encapsulation, inheritance, polymorphism, abstraction, and object-centric design.
+It visualizes repository metrics in rich interactive Plotly.js dashboards, supports side-by-side repository comparisons, stores long-term analysis runs in a SQLite database, exposes a RESTful JSON API, and compiles detailed academic scorecards into professional PDF reports.
 
-## Prerequisites
+---
 
-- **Python 3.10+**
-- **GitHub Personal Access Token** (with `repo` scope for public repos)
-- **pip** (Python package manager)
+## ✨ Features in v2.0
 
-## Local Setup
+*   🧠 **AST-Based Code Analysis Engine**: Dynamically clones, parses, and measures the repository code itself. Extracts deep structural OOP indicators (Class count, Encapsulation visibility modifiers, Multiple inheritance constructs, Static/Global utility patterns) to adjust the theoretical base score of the dominant programming language.
+*   📊 **Repository Comparison Dashboard**: Select multiple analyzed repositories (2–4) from your history and compare their structural OOP profiles side-by-side using multi-trace radar charts and grouped category comparisons.
+*   💾 **SQLite Database Persistence**: Full historical tracking. All past analysis sessions, repository results, and AST metrics are persistently saved in a SQLite database (`instance/oop_analyzer.db`), replacing volatile flask sessions.
+*   📄 **Branded PDF Report Generator**: Export detailed analysis runs into beautiful, publication-ready PDF reports built programmatically using Flowable layouts, tabular metrics breakdowns, and academic styling.
+*   🔌 **RESTful JSON API**: Exposes the complete scraping, scoring, and historical data engine under `/api/v1/` for external automated scoring pipelines.
+
+---
+
+## 🛠️ Tech Stack
+
+*   **Backend**: Python, Flask, Flask-SQLAlchemy (SQLite)
+*   **AST Analysis**: Multi-Language Regex Engine (Python, Java dominant)
+*   **Report Generation**: ReportLab (PDF Engine)
+*   **Visualizations**: Plotly.js, Vanilla CSS Glassmorphism
+*   **API Client**: PyGitHub (Scraping & Metadata Extraction)
+
+---
+
+## 🚀 Local Setup
 
 ### 1. Clone the Repository
-
 ```bash
 git clone <your-repo-url>
 cd oop_purity_analyzer
 ```
 
-### 2. Create a Virtual Environment
-
-```bash
+### 2. Configure Virtual Environment & Dependencies
+```powershell
+# Create venv
 python -m venv venv
 
-# Windows
-venv\Scripts\activate
+# Activate venv (Windows)
+.\venv\Scripts\Activate.ps1
 
-# macOS/Linux
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-
-```bash
+# Install requirements
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
-
+### 3. Setup Environment Configuration
+Copy the `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-
-Edit `.env` and configure your credentials:
-
+Open `.env` and fill out the configuration:
 ```ini
-# Use 'mock' to run the application with high-fidelity pre-configured offline mock data
-# Or replace with a real GitHub Personal Access Token to query live repositories
+# Set to your GitHub token for live analysis or 'mock' to run offline with pre-configured datasets
 GITHUB_TOKEN=mock
-SECRET_KEY=a-random-secret-key-for-flask
+SECRET_KEY=generate-a-strong-random-key
 FLASK_ENV=development
 SESSION_FILE_DIR=./flask_session
 ```
 
-### 5. Run the Application
+### 4. Run the Server
+Use the venv python interpreter to start the Flask application:
+```powershell
+.\venv\Scripts\python app.py
+```
+Open your browser and navigate to **`http://localhost:5000`**.
 
-To run the application:
+---
 
-```bash
-flask run
+## 📈 RESTful JSON API Documentation
+
+Exposed endpoints under `/api/v1` for automated scoring integrations:
+
+### 1. Supported Languages
+*   **URL**: `/api/v1/languages`
+*   **Method**: `GET`
+*   **Description**: Get theoretical scoring metrics and categories for the 8 supported OOP languages.
+
+### 2. Historical Analysis Runs
+*   **URL**: `/api/v1/history?page=1&per_page=10`
+*   **Method**: `GET`
+*   **Description**: Fetch paginated database records of all past analysis sessions.
+
+### 3. Analyze Repositories
+*   **URL**: `/api/v1/analyze`
+*   **Method**: `POST`
+*   **Body**:
+    ```json
+    {
+      "mode": "search",
+      "input_data": "design patterns",
+      "limit": 5
+    }
+    ```
+*   **Description**: Programmatically trigger, score, and persist a new repository analysis run.
+
+### 4. Single Repository Quick-Score
+*   **URL**: `/api/v1/score/<owner>/<repo>`
+*   **Method**: `GET`
+*   **Description**: Retrieve instant score details and AST indicators for a specific repository.
+
+---
+
+## 📊 Academic Scoring Rubric
+
+Theoretical base language scores are distributed across **7 categories (Total 100 points)**:
+
+| Category | OOP Metric Focus | Max Points |
+|:---|:---|:---:|
+| **C1** | Encapsulation & Access Control | 20 |
+| **C2** | Inheritance Mechanics | 15 |
+| **C3** | Polymorphism & Dynamic Dispatch | 15 |
+| **C4** | Abstraction Models | 15 |
+| **C5** | Object-Centric Lifecycle & Design | 15 |
+| **C6** | OOP Paradigm Enforcement | 10 |
+| **C7** | Advanced OOP Features & Type Safety | 10 |
+| | **Total Maximum Score** | **100** |
+
+### 🏷️ Purity Tiering
+*   **85–100**: 🟢 **Pure OOP** (e.g., Smalltalk, Java)
+*   **65–84**: 🔵 **Near-Pure OOP** (e.g., Python, C#, Kotlin)
+*   **45–64**: 🟡 **Mixed Paradigm** (e.g., JavaScript, C++)
+*   **25–44**: 🟠 **OOP-Adjacent** (e.g., Go, Rust)
+*   **0–24**: 🔴 **Non-OOP** (Procedural/Functional dominants)
+
+---
+
+## 🧠 Code-Level Heuristics (AST Modifiers)
+At runtime, the analyzer scans repository files and adjusts base language purity scores:
+*   ➕ **Encapsulation Bonus**: Reward usage of `private` and `protected` fields (strict access safety).
+*   ➖ **Static/Global Penalty**: Penalty for excessive global functions, file-level variables, or `static` utility classes bypassing object lifecycle principles.
+*   ➖ **Anti-Inheritance Penalty**: Penalty for excessive multi-inheritance constructs or non-class-oriented structures in OOP languages.
+
+---
+
+## 📄 Exporting & Citation
+
+### PDF Reports
+You can download professional PDFs by clicking the **"Export PDF"** button on the results dashboard or history cards. These reports detail the executive summary, language breakdown, AST modifications, and a technical scorecard.
+
+### Academic Citation
+If you use this analyzer or its scoring metrics in your research, please cite:
+```text
+OOP Purity Framework: An AST-Augmented, 7-Category, 24-Sub-Criterion Quantitative Scoring Rubric for Evaluating Repository-Level Object-Oriented Adherence.
 ```
 
-Or:
+---
 
-```bash
-python app.py
-```
-
-The app will start locally and will be available in your browser at:
-**`http://localhost:5000`** (or `http://127.0.0.1:5000`)
-
-## How to Get a GitHub Personal Access Token
-
-1. Go to [github.com/settings/tokens](https://github.com/settings/tokens)
-2. Click **"Generate new token"** → **"Generate new token (classic)"**
-3. Give it a descriptive name (e.g., "OOP Purity Analyzer")
-4. Select the **`public_repo`** scope (under `repo`)
-5. Click **"Generate token"**
-6. Copy the token immediately (you won't see it again)
-7. Paste it into your `.env` file as `GITHUB_TOKEN`
-
-## Usage Guide
-
-### Mode 1: By URL
-
-Enter one or more full GitHub repository URLs, one per line:
-
-```
-https://github.com/django/django
-https://github.com/spring-projects/spring-framework
-https://github.com/rails/rails
-```
-
-### Mode 2: By Topic/Keyword
-
-Enter a search keyword or topic (e.g., "machine learning", "web framework") and set the maximum number of repositories to analyze (1–100).
-
-### Mode 3: By GitHub Username
-
-Enter a GitHub username (e.g., "torvalds", "gvanrossum") and set the maximum number of repositories to fetch (1–100).
-
-## Scoring Rubric
-
-### Categories and Maximum Scores
-
-| Code | Category | Max Score |
-|------|----------|-----------|
-| C1 | Encapsulation | 20 |
-| C2 | Inheritance | 15 |
-| C3 | Polymorphism | 15 |
-| C4 | Abstraction | 15 |
-| C5 | Object-Centric Design | 15 |
-| C6 | OOP Enforcement & Non-OOP Resistance | 10 |
-| C7 | Type System & Supplementary OOP Features | 10 |
-| | **Total** | **100** |
-
-### Sub-Criteria Count
-
-- **C1**: 5 sub-criteria (C1.1–C1.5)
-- **C2**: 5 sub-criteria (C2.1–C2.5)
-- **C3**: 4 sub-criteria (C3.1–C3.4)
-- **C4**: 4 sub-criteria (C4.1–C4.4)
-- **C5**: 4 sub-criteria (C5.1–C5.4)
-- **C6**: 3 sub-criteria (C6.1–C6.3)
-- **C7**: 3 sub-criteria (C7.1–C7.3)
-
-## Purity Tier Definitions
-
-| Score Range | Tier | Description |
-|-------------|------|-------------|
-| 85–100 | Pure OOP | Language enforces OOP as the sole paradigm |
-| 65–84 | Near-Pure OOP | Strong OOP with minor non-OOP allowances |
-| 45–64 | Mixed Paradigm | Supports OOP but also other paradigms equally |
-| 25–44 | OOP-Adjacent | Has OOP features but doesn't enforce them |
-| 0–24 | Non-OOP | Minimal or no OOP support |
-
-## Supported Languages
-
-Smalltalk, Java, Python, JavaScript, C++, Ruby, C#, Kotlin
-
-## Deployment (Render / Railway)
-
-### Using Gunicorn
-
-Create a `Procfile` or configure the start command:
-
-```
-web: gunicorn app:app --bind 0.0.0.0:$PORT
-```
-
-### Environment Variables
-
-Set the following environment variables in your deployment platform:
-
-- `GITHUB_TOKEN` — Your GitHub Personal Access Token
-- `SECRET_KEY` — A strong random secret for Flask sessions
-- `FLASK_ENV` — Set to `production`
-- `SESSION_FILE_DIR` — Set to `./flask_session`
-
-## Known Limitations
-
-- **Only 8 languages supported**: Smalltalk, Java, Python, JavaScript, C++, Ruby, C#, and Kotlin. Repositories using other languages will be marked as "Unsupported."
-- **Scores are static/predefined**: OOP purity scores are based on language specifications and academic literature, not inferred from source code at runtime.
-- **GitHub API rate limits**: The GitHub API allows 5,000 requests per hour for authenticated users. Large analyses may hit this limit.
-- **Session storage**: Results are stored in the Flask session (filesystem). They persist until the server restarts or the session expires.
-
-## Citation
-
-If using this tool in academic work, please reference the scoring rubric as:
-
-> OOP Purity Framework: A 7-Category, 24-Sub-Criterion Quantitative Scoring Rubric for Evaluating Object-Oriented Programming Language Purity.
-
-## License
-
-This project is intended for academic and research purposes.
+## 📄 License
+This application is designed for research, academic evaluation, and software quality assurance. All rights reserved.
