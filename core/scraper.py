@@ -69,6 +69,83 @@ def _check_rate_limit(g: Github) -> str | None:
     return None
 
 
+def _fetch_repo_file_metrics(repo: Any, languages_used: dict[str, int]) -> dict[str, list[dict[str, Any]]]:
+    """Fetch sample files for supported languages and run AST analysis.
+
+    Returns a dictionary mapping language to list of file metrics.
+    """
+    from core.scores_db import LANGUAGE_ALIASES
+    from core import ast_analyzer
+
+    supported_langs = {}
+    for lang_name in languages_used.keys():
+        norm = LANGUAGE_ALIASES.get(lang_name.lower())
+        if norm:
+            supported_langs[norm] = lang_name
+
+    if not supported_langs:
+        return {}
+
+    # Map normalized language to file extensions
+    ext_map = {
+        "Python": [".py"],
+        "Java": [".java"],
+        "JavaScript": [".js", ".jsx"],
+        "TypeScript": [".ts", ".tsx"],
+        "C++": [".cpp", ".h", ".hpp", ".cc"],
+        "Ruby": [".rb"],
+        "C#": [".cs"],
+        "Kotlin": [".kt"]
+    }
+
+    file_metrics_by_lang = {lang: [] for lang in supported_langs}
+
+    try:
+        # Walk root directory
+        root_contents = repo.get_contents("")
+        queue = list(root_contents)
+        file_items = []
+
+        # Limit traversal depth and total files to avoid rate limits
+        dirs_visited = 0
+        while queue and len(file_items) < 30 and dirs_visited < 10:
+            item = queue.pop(0)
+            if item.type == "dir":
+                # Only traverse folders like src, app, lib, core, source
+                if item.name.lower() in ("src", "lib", "app", "core", "source", "kotlin", "java", "python"):
+                    dirs_visited += 1
+                    try:
+                        queue.extend(repo.get_contents(item.path))
+                    except Exception:
+                        pass
+            elif item.type == "file":
+                file_items.append(item)
+
+        # Group file items by supported language
+        for item in file_items:
+            matched_lang = None
+            for norm_lang in supported_langs:
+                exts = ext_map.get(norm_lang, [])
+                if any(item.name.endswith(ext) for ext in exts):
+                    matched_lang = norm_lang
+                    break
+
+            if matched_lang and len(file_metrics_by_lang[matched_lang]) < 10:
+                try:
+                    content_file = repo.get_contents(item.path)
+                    if content_file.size > 0 and content_file.size < 500000:  # limit to < 500KB
+                        decoded = content_file.decoded_content.decode("utf-8", errors="ignore")
+                        metrics = ast_analyzer.analyze_code_content(matched_lang, decoded)
+                        file_metrics_by_lang[matched_lang].append(metrics)
+                except Exception as e:
+                    logger.warning("Error fetching/analyzing file %s: %s", item.path, e)
+
+    except Exception as exc:
+        logger.warning("Error traversing repo %s for file metrics: %s", repo.full_name, exc)
+
+    return file_metrics_by_lang
+
+
 def _extract_repo_data(repo: Any) -> dict[str, Any]:
     """Extract standardized data fields from a GitHub repository object.
 
@@ -90,13 +167,16 @@ def _extract_repo_data(repo: Any) -> dict[str, Any]:
         languages_used = {}
         logger.warning("Could not fetch languages for %s", repo.full_name)
 
+    dict_langs = dict(languages_used)
+    file_metrics = _fetch_repo_file_metrics(repo, dict_langs)
+
     return {
         "name": repo.name,
         "full_name": repo.full_name,
         "url": repo.html_url,
         "description": repo.description or "",
         "primary_language": repo.language or "Unknown",
-        "languages_used": dict(languages_used),
+        "languages_used": dict_langs,
         "stars": repo.stargazers_count,
         "forks": repo.forks_count,
         "open_issues": repo.open_issues_count,
@@ -104,6 +184,7 @@ def _extract_repo_data(repo: Any) -> dict[str, Any]:
         "created_at": repo.created_at.isoformat() if repo.created_at else "",
         "updated_at": repo.updated_at.isoformat() if repo.updated_at else "",
         "size_kb": repo.size,
+        "file_metrics": file_metrics,
     }
 
 
