@@ -56,6 +56,9 @@ def score_repo(repo_data: dict[str, Any]) -> dict[str, Any]:
         languages_used = {primary_lang: 1000}
 
     supported_langs = []
+    file_metrics = repo_data.get("file_metrics", {})
+    from core import code_scorer
+
     for lang_name, bytes_count in languages_used.items():
         matched_key = LANGUAGE_ALIASES.get(lang_name.lower())
         if matched_key and matched_key in LANGUAGE_SCORES:
@@ -66,12 +69,33 @@ def score_repo(repo_data: dict[str, Any]) -> dict[str, Any]:
                 cat_subs = sub_scores.get(cat_key, {})
                 cat_scores[cat_key] = sum(cat_subs.values())
             lang_total_score = sum(cat_scores.values())
+
+            # Fetch file metrics and calculate modifier
+            lang_files = file_metrics.get(matched_key, [])
+            mod_result = code_scorer.calculate_code_modifier(matched_key, lang_files)
+            modifier = mod_result["modifier"]
+            modifier_reason = mod_result["reason"]
+            agg_metrics = mod_result["metrics"]
+
+            # Apply modifier to the total score of this language
+            adjusted_lang_total_score = int(round(lang_total_score * modifier))
+            adjusted_lang_total_score = max(0, min(100, adjusted_lang_total_score))
+
+            # Scale category scores by modifier
+            adjusted_cat_scores = {}
+            for cat_key, cat_val in cat_scores.items():
+                adjusted_cat_scores[cat_key] = round(cat_val * modifier, 2)
+
             supported_langs.append({
                 "language": matched_key,
                 "bytes": bytes_count,
                 "sub_scores": sub_scores,
-                "category_scores": cat_scores,
-                "total_score": lang_total_score
+                "category_scores": adjusted_cat_scores,
+                "total_score": adjusted_lang_total_score,
+                "base_score": lang_total_score,
+                "modifier": modifier,
+                "modifier_reason": modifier_reason,
+                "metrics": agg_metrics,
             })
 
     if not supported_langs:
