@@ -24,7 +24,7 @@ _MARGIN = dict(l=60, r=40, t=60, b=60)
 
 
 def _empty_figure(message: str = "No data available") -> str:
-    """Create a Plotly figure with a centered message for empty data.
+    """Create a Plotly figure showing a centered message for empty data.
 
     Args:
         message: The message to display.
@@ -52,7 +52,7 @@ def _empty_figure(message: str = "No data available") -> str:
 
 
 def _get_scored_only(scored_repos: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Filter to only scored repos.
+    """Filter repository list to return only successfully scored repos.
 
     Args:
         scored_repos: List of all repo dicts (scored and unscored).
@@ -80,7 +80,7 @@ def _format_languages_scored(repo: dict[str, Any]) -> str:
 
 
 def bar_chart_total_scores(scored_repos: list[dict[str, Any]]) -> str:
-    """Horizontal bar chart of total OOP purity scores by repository.
+    """Generate horizontal bar chart of total OOP purity scores by repository.
 
     Args:
         scored_repos: List of scored repo dictionaries.
@@ -129,7 +129,7 @@ def bar_chart_total_scores(scored_repos: list[dict[str, Any]]) -> str:
 
 
 def radar_chart_by_language(language: str) -> str:
-    """Spider/radar chart for a single language showing C1–C7 category percentages.
+    """Generate spider/radar chart for a single language showing category percentages.
 
     Args:
         language: The canonical language name (e.g. 'Java').
@@ -183,7 +183,7 @@ def radar_chart_by_language(language: str) -> str:
 
 
 def heatmap_subcriteria(scored_repos: list[dict[str, Any]]) -> str:
-    """Heatmap of sub-criterion scores by language.
+    """Generate heatmap of sub-criterion scores by language.
 
     Args:
         scored_repos: List of scored repo dictionaries.
@@ -248,7 +248,7 @@ def heatmap_subcriteria(scored_repos: list[dict[str, Any]]) -> str:
 
 
 def grouped_bar_category_comparison(scored_repos: list[dict[str, Any]]) -> str:
-    """Grouped bar chart comparing category percentages across languages.
+    """Generate grouped bar chart comparing category percentages across languages.
 
     Args:
         scored_repos: List of scored repo dictionaries.
@@ -309,7 +309,7 @@ def grouped_bar_category_comparison(scored_repos: list[dict[str, Any]]) -> str:
 
 
 def treemap_repos_by_tier(scored_repos: list[dict[str, Any]]) -> str:
-    """Treemap of repositories organized by purity tier and language.
+    """Generate treemap of repositories organized by purity tier and language.
 
     Args:
         scored_repos: List of scored repo dictionaries.
@@ -412,7 +412,7 @@ def treemap_repos_by_tier(scored_repos: list[dict[str, Any]]) -> str:
 
 
 def scatter_score_vs_stars(scored_repos: list[dict[str, Any]]) -> str:
-    """Scatter plot of OOP purity score vs GitHub stars with OLS trendline.
+    """Generate scatter plot of OOP purity score vs GitHub stars with OLS trendline.
 
     Args:
         scored_repos: List of scored repo dictionaries.
@@ -510,7 +510,7 @@ def scatter_score_vs_stars(scored_repos: list[dict[str, Any]]) -> str:
 
 
 def donut_tier_distribution(scored_repos: list[dict[str, Any]]) -> str:
-    """Donut chart showing repository distribution by purity tier.
+    """Generate donut chart showing repository distribution by purity tier.
 
     Args:
         scored_repos: List of scored repo dictionaries.
@@ -568,7 +568,7 @@ def donut_tier_distribution(scored_repos: list[dict[str, Any]]) -> str:
 
 
 def line_chart_score_over_time(scored_repos: list[dict[str, Any]]) -> str:
-    """Line chart of average OOP purity score by year of repo creation.
+    """Generate line chart of average OOP purity score by year of repo creation.
 
     Args:
         scored_repos: List of scored repo dictionaries.
@@ -643,7 +643,7 @@ def line_chart_score_over_time(scored_repos: list[dict[str, Any]]) -> str:
 
 
 def stacked_bar_category_contribution(scored_repos: list[dict[str, Any]]) -> str:
-    """Stacked horizontal bar chart showing category contribution per repo.
+    """Generate stacked horizontal bar chart showing category contribution per repo.
 
     Args:
         scored_repos: List of scored repo dictionaries.

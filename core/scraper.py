@@ -17,7 +17,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _get_github_client() -> Github | None:
-    """Create and validate a GitHub API client.
+    """Initialize and validate a new GitHub API client.
 
     Returns:
         Authenticated Github client instance or None in mock mode.
@@ -44,7 +44,7 @@ def _get_github_client() -> Github | None:
 
 
 def _check_rate_limit(g: Github) -> str | None:
-    """Check GitHub API rate limit before making calls.
+    """Check remaining GitHub API rate limit before making calls.
 
     Args:
         g: Authenticated Github client.
@@ -147,7 +147,7 @@ def _fetch_repo_file_metrics(repo: Any, languages_used: dict[str, int]) -> dict[
 
 
 def _extract_repo_data(repo: Any) -> dict[str, Any]:
-    """Extract standardized data fields from a GitHub repository object.
+    """Extract standardized repository data fields from a GitHub repository object.
 
     Args:
         repo: A PyGithub Repository object.
@@ -189,7 +189,7 @@ def _extract_repo_data(repo: Any) -> dict[str, Any]:
 
 
 def _parse_repo_url(url: str) -> str | None:
-    """Parse owner/repo from a GitHub URL.
+    """Extract the owner/repo path from a GitHub URL.
 
     Args:
         url: Full GitHub URL (e.g. https://github.com/django/django).
@@ -207,7 +207,7 @@ def _parse_repo_url(url: str) -> str | None:
 
 
 def _scrape_by_urls(g: Github, input_data: str) -> list[dict[str, Any]]:
-    """Scrape repos from a newline-separated list of GitHub URLs.
+    """Scrape repository data from a newline-separated list of GitHub URLs.
 
     Args:
         g: Authenticated Github client.
@@ -243,7 +243,7 @@ def _scrape_by_urls(g: Github, input_data: str) -> list[dict[str, Any]]:
 def _scrape_by_search(
     g: Github, query: str, limit: int
 ) -> list[dict[str, Any]]:
-    """Scrape repos by topic/keyword search.
+    """Scrape repositories matching a topic or keyword search.
 
     Args:
         g: Authenticated Github client.
@@ -281,7 +281,7 @@ def _scrape_by_search(
 def _scrape_by_user(
     g: Github, username: str, limit: int
 ) -> list[dict[str, Any]]:
-    """Scrape repos from a GitHub user's public repositories.
+    """Scrape repositories from a specified GitHub user's public profile.
 
     Args:
         g: Authenticated Github client.
@@ -318,7 +318,7 @@ def _scrape_by_user(
 
 
 def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[str, Any]]:
-    """Generate high-fidelity mock repository data representing all 8 supported languages."""
+    """Generate high-fidelity mock repository data representing supported OOP languages."""
     all_mocks = [
         {
             "name": "pharo",
@@ -523,7 +523,7 @@ def _generate_mock_repos(mode: str, input_data: str, limit: int) -> list[dict[st
 def scrape(
     mode: str, input_data: str, limit: int = 20
 ) -> list[dict[str, Any]]:
-    """Main scraping dispatcher supporting three input modes.
+    """Main scraping dispatcher routing requests based on input mode.
 
     Args:
         mode: One of 'urls', 'search', or 'user'.

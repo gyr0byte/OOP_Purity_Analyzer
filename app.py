@@ -85,7 +85,7 @@ except Exception as exc:
 
 @app.route("/", methods=["GET"])
 def index() -> str:
-    """Render the landing page with the analysis input form.
+    """Render the main landing page with the analysis input form.
 
     Returns:
         Rendered index.html template.
@@ -98,7 +98,7 @@ def index() -> str:
 
 @app.route("/analyze", methods=["POST"])
 def analyze() -> Any:
-    """Process the analysis form, scrape repos, score them, and redirect.
+    """Process the analysis form inputs, scrape repositories, score them, and redirect.
 
     Reads form fields (mode, input_data, limit), runs the scraper and scorer,
     stores results in the Flask session, and redirects to /results.
@@ -165,7 +165,7 @@ def analyze() -> Any:
 
 @app.route("/results", methods=["GET"])
 def results() -> Any:
-    """Render the results dashboard with all 9 charts and summary stats.
+    """Render the results dashboard with all charts and summary stats.
 
     Returns:
         Rendered results.html template, or redirect to / if no data.
@@ -220,7 +220,7 @@ def results() -> Any:
 
 @app.route("/rubric", methods=["GET"])
 def rubric() -> str:
-    """Render the full OOP purity scoring rubric reference page.
+    """Render the complete OOP purity scoring rubric reference page.
 
     Returns:
         Rendered rubric.html template.
@@ -236,7 +236,7 @@ def rubric() -> str:
 
 @app.route("/export/csv", methods=["GET"])
 def export_csv() -> Any:
-    """Export scored repos as a downloadable CSV file.
+    """Export successfully scored repos as a downloadable CSV file.
 
     Returns:
         CSV file attachment, or redirect to / if no data.

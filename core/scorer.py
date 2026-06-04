@@ -1,4 +1,4 @@
-"""Score lookup, aggregation, and tier classification.
+"""Score lookup, aggregation, and evaluation tier classification.
 
 Given repository data from the scraper, this module looks up pre-defined
 OOP purity scores, computes category totals and percentages, assigns
@@ -20,7 +20,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _get_purity_tier(total_score: int) -> tuple[str, str]:
-    """Look up the purity tier for a given total score.
+    """Determine the matching purity tier for a given total score.
 
     Args:
         total_score: The total OOP purity score (0–100).
@@ -158,7 +158,7 @@ def score_repo(repo_data: dict[str, Any]) -> dict[str, Any]:
 def score_all(
     repos: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Score all repositories and generate summary statistics.
+    """Score all listed repositories and generate consolidated summary statistics.
 
     Args:
         repos: List of repository data dictionaries from the scraper.

@@ -1,1 +1,1 @@
-"""Core package for OOP Purity Analyzer — scoring, scraping, and chart generation."""
+"""Core package for OOP Purity Analyzer — handles scoring, scraping, and chart generation."""

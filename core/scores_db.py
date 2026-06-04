@@ -80,7 +80,7 @@ LANGUAGE_SCORES: dict[str, dict[str, dict[str, int]]] = {
     },
 }
 
-# Maps GitHub's language field (case-insensitive) to a key in LANGUAGE_SCORES
+# Maps GitHub's language field (case-insensitive) to the supported language keys
 LANGUAGE_ALIASES: dict[str, str] = {
     "smalltalk": "Smalltalk",
     "java": "Java",
